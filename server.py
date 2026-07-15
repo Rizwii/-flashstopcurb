@@ -44,8 +44,8 @@ FAKE_CURBS = [
         "lat"       : 4.3853,
         "lng"       : 100.9737,
         "state"     : "PRE_CLOG",
-        "depth_cm"  : 2.5,
-        "battery_v" : 3.7,
+        "depth_cm"  : 4,
+
         "timestamp" : "2026-07-13 08:15:00"
     },
     {
@@ -54,8 +54,8 @@ FAKE_CURBS = [
         "lat"       : 4.3840,
         "lng"       : 100.9755,
         "state"     : "CRITICAL",
-        "depth_cm"  : 4.5,
-        "battery_v" : 3.6,
+        "depth_cm"  : 8,
+    
         "timestamp" : "2026-07-13 08:20:00"
     },
     {
@@ -65,7 +65,7 @@ FAKE_CURBS = [
         "lng"       : 100.9750,
         "state"     : "NORMAL",
         "depth_cm"  : 0.1,
-        "battery_v" : 4.0,
+        
         "timestamp" : "2026-07-13 08:18:00"
     },
     {
@@ -75,7 +75,7 @@ FAKE_CURBS = [
         "lng"       : 100.9730,
         "state"     : "NORMAL",
         "depth_cm"  : 0.3,
-        "battery_v" : 3.8,
+        
         "timestamp" : "2026-07-13 08:10:00"
     }
 ]

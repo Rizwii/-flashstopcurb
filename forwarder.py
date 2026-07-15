@@ -5,8 +5,8 @@ import time
 PORT = "COM5"
 SERVER = "https://flashstopcurb.onrender.com"
 
-PRE_CLOG = 1.5
-CRITICAL = 3.0
+PRE_CLOG = 4.0
+CRITICAL = 7.5
 
 STABLE_COUNT = 3  # consecutive readings needed to confirm a state change
 
@@ -40,7 +40,6 @@ def main():
         raw_state = get_state(depth)
         print(f"Depth: {depth} cm | Reading: {raw_state}")
 
-        # debounce: new state must hold for STABLE_COUNT consecutive readings
         if raw_state == candidate_state:
             candidate_count += 1
         else:
@@ -55,14 +54,13 @@ def main():
         if confirmed is None:
             confirmed = raw_state
 
-        # send when confirmed state changes, or every 60s to keep dashboard fresh
         if confirmed != last_state or time.time() - last_sent >= 60:
             try:
                 r = requests.post(f"{SERVER}/alert", json={
                     "id": "Curb #1",
                     "state": confirmed,
                     "depth_cm": depth,
-                    "distance_cm": 5.0 - depth,
+                    "distance_cm": 11.0 - depth,
                     "battery_v": 0
                 }, timeout=60)
                 print(f"  -> State {confirmed} sent: {r.status_code}")

@@ -812,7 +812,7 @@
           },
           y: {
             min  : 0,
-            max  : 5.5,
+            max  : 11.5,
             ticks: { color: '#718096', font: { size: 10 } },
             grid : { color: '#CBD5E0' }
           }
@@ -824,7 +824,7 @@
           const { ctx, chartArea: { left, right }, scales: { y } } = chart;
 
           // Pre-Clog line at 1.5cm
-          const y1 = y.getPixelForValue(1.5);
+          const y1 = y.getPixelForValue(4.0);
           ctx.save();
           ctx.setLineDash([6, 4]);
           ctx.strokeStyle = '#D69E2E';
@@ -835,17 +835,17 @@
           ctx.stroke();
           ctx.fillStyle  = '#D69E2E';
           ctx.font       = 'bold 10px Segoe UI';
-          ctx.fillText('PRE-CLOG 1.5cm', right - 110, y1 - 5);
+          ctx.fillText('PRE-CLOG 4.0cm', right - 110, y1 - 5);
 
           // Critical line at 3.0cm
-          const y2 = y.getPixelForValue(3.0);
+          const y2 = y.getPixelForValue(7.5);
           ctx.strokeStyle = '#FC8181';
           ctx.beginPath();
           ctx.moveTo(left, y2);
           ctx.lineTo(right, y2);
           ctx.stroke();
           ctx.fillStyle  = '#FC8181';
-          ctx.fillText('CRITICAL 3.0cm', right - 110, y2 - 5);
+          ctx.fillText('CRITICAL 7.5cm', right - 110, y2 - 5);
           ctx.restore();
         }
       }]
@@ -856,7 +856,7 @@
     // Generate fake historical data for non-real curbs
     const labels = [];
     const depths = [];
-    const baseDepth = state === 'CRITICAL' ? 4.2 : state === 'PRE_CLOG' ? 2.2 : 0.2;
+    const baseDepth = state === 'CRITICAL' ? 9.0 : state === 'PRE_CLOG' ? 5.0 : 0.2;
     for (let i = 11; i >= 0; i--) {
       const d = new Date();
       d.setMinutes(d.getMinutes() - i * 5);
