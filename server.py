@@ -26,6 +26,7 @@ def is_raining():
         return (c.get("rain", 0) or 0) > 0 or (c.get("precipitation", 0) or 0) > 0
     except Exception:
         return None  # weather unknown
+
 # ─── Rate limiting ─────────────────────────────────────────────
 ALERT_COOLDOWN_MINUTES = 5
 last_alert_time        = {}
@@ -360,7 +361,9 @@ def alert():
             f"📍 Location: {maps_link}"
         )
     else:
-        message = f"❓ Unknown state received: {state}"e
+        message = f"❓ Unknown state received: {state}"
+
+    telegram_sent = False
     if not is_silenced() and not is_rate_limited(state):
         send_telegram(message)
         save_alert(state, depth, message)
