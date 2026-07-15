@@ -364,10 +364,12 @@ def alert():
         message = f"❓ Unknown state received: {state}"
 
     telegram_sent = False
-    if not is_silenced() and not is_rate_limited(state):
+    state_changed = last_alert_time.get("last_state") != state
+    if not is_silenced() and (state_changed or not is_rate_limited(state)):
         send_telegram(message)
         save_alert(state, depth, message)
         last_alert_time[state] = datetime.now()
+        last_alert_time["last_state"] = state
         telegram_sent = True
 
     return jsonify({"status": "received", "telegram_sent": telegram_sent})
