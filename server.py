@@ -13,7 +13,19 @@ CORS(app)
 BOT_TOKEN = "7971224857:AAFSrm4pxw9IRlyoqMa2AY_T6Pf5F0aMyc0"
 CHAT_ID   = "-5450778403"
 # ───────────────────────────────────────────────────────────────
+CURB_LAT, CURB_LNG = 4.3810, 100.9720
 
+def is_raining():
+    """Check Open-Meteo for current rainfall at the curb. Returns True/False/None."""
+    try:
+        url = (f"https://api.open-meteo.com/v1/forecast?"
+               f"latitude={CURB_LAT}&longitude={CURB_LNG}"
+               f"&current=rain,precipitation&timezone=auto")
+        r = requests.get(url, timeout=10)
+        c = r.json().get("current", {})
+        return (c.get("rain", 0) or 0) > 0 or (c.get("precipitation", 0) or 0) > 0
+    except Exception:
+        return None  # weather unknown
 # ─── Rate limiting ─────────────────────────────────────────────
 ALERT_COOLDOWN_MINUTES = 5
 last_alert_time        = {}
@@ -315,31 +327,40 @@ def alert():
             f"Curb       : {curb_id}\n"
             f"Water Depth: {depth} cm\n"
             f"Status     : Drain is clear\n"
-            f"Battery    : {battery}V\n"
             f"📍 Location: {maps_link}"
         )
     elif state == "PRE_CLOG":
+        rain = is_raining()
+        if rain is False:
+            cause = "No rainfall detected — likely BLOCKAGE. Send crew to clean this curb."
+        elif rain is True:
+            cause = "Rainfall ongoing — water rise expected, monitor closely."
+        else:
+            cause = "Debris accumulating — schedule maintenance"
         message = (
             f"⚠️ <b>PRE-CLOG WARNING</b>\n"
             f"Curb       : {curb_id}\n"
             f"Water Depth: {depth} cm\n"
-            f"Status     : Debris accumulating — schedule maintenance\n"
-            f"Battery    : {battery}V\n"
+            f"Status     : {cause}\n"
             f"📍 Location: {maps_link}"
         )
     elif state == "CRITICAL":
+        rain = is_raining()
+        if rain is False:
+            cause = "DRAIN FULL with NO rainfall — severe blockage, dispatch cleaning crew NOW"
+        elif rain is True:
+            cause = "DRAIN FULL during rainfall — flood risk, immediate action required"
+        else:
+            cause = "DRAIN FULL — immediate action required"
         message = (
             f"🚨 <b>CRITICAL FLOOD ALERT</b>\n"
             f"Curb       : {curb_id}\n"
             f"Water Depth: {depth} cm\n"
-            f"Status     : DRAIN FULL — immediate action required\n"
-            f"Battery    : {battery}V\n"
+            f"Status     : {cause}\n"
             f"📍 Location: {maps_link}"
         )
     else:
-        message = f"❓ Unknown state received: {state}"
-
-    telegram_sent = False
+        message = f"❓ Unknown state received: {state}"e
     if not is_silenced() and not is_rate_limited(state):
         send_telegram(message)
         save_alert(state, depth, message)
