@@ -219,62 +219,9 @@
       margin-top: 2px;
     }
 
-    .battery-card { grid-column: 3; grid-row: 1; }
+    .weather-card { grid-column: 3; grid-row: 1; }
 
-    .battery-visual {
-      margin-bottom: 12px;
-    }
-
-    .battery-shell {
-      position: relative;
-      width: 100%;
-      height: 88px;
-      border: 3px solid #2D3748;
-      border-radius: 12px;
-      padding: 8px;
-      overflow: hidden;
-      background: #F7FAFC;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .battery-shell::after {
-      content: '';
-      position: absolute;
-      right: -7px;
-      top: 24px;
-      width: 10px;
-      height: 32px;
-      background: #2D3748;
-      border-radius: 0 8px 8px 0;
-    }
-
-    .battery-fill {
-      position: absolute;
-      left: 8px;
-      top: 8px;
-      bottom: 8px;
-      width: 0;
-      border-radius: 8px;
-      background-color: #48BB78;
-      transition: width 0.5s ease;
-      z-index: 0;
-    }
-
-    .battery-fill.medium { background-color: #D69E2E; }
-    .battery-fill.low { background-color: #FC8181; }
-
-    .battery-pct {
-      position: relative;
-      z-index: 1;
-      font-size: 32px;
-      font-weight: 800;
-      color: #2D3748;
-      line-height: 1;
-    }
-
-    .battery-label {
+    .weather-label {
       font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 1px;
@@ -283,26 +230,52 @@
       font-weight: 700;
     }
 
-    .battery-bar-bg {
-      width: 100%;
-      height: 20px;
-      background-color: rgba(45, 55, 72, 0.14);
-      border-radius: 999px;
-      overflow: hidden;
+    .weather-main {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+
+    .weather-icon { font-size: 48px; }
+
+    .weather-temp {
+      font-size: 32px;
+      font-weight: 800;
+      color: #2D3748;
+      line-height: 1;
+    }
+
+    .weather-desc {
+      font-size: 12px;
+      color: #718096;
+      margin-top: 4px;
+      font-weight: 700;
+    }
+
+    .weather-stats {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
       margin: 12px 0;
     }
 
-    .battery-bar-fill {
-      height: 100%;
-      border-radius: 999px;
-      background-color: #48BB78;
-      transition: width 0.5s;
+    .weather-stat {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #718096;
+      padding: 6px 10px;
+      background: rgba(45, 55, 72, 0.06);
+      border-radius: 6px;
     }
 
-    .battery-bar-fill.low    { background-color: #FC8181; }
-    .battery-bar-fill.medium { background-color: #D69E2E; }
+    .weather-stat span:last-child {
+      font-weight: 700;
+      color: #2D3748;
+    }
 
-    .battery-health {
+    .rain-status {
       display: flex;
       align-items: center;
       gap: 8px;
@@ -313,12 +286,6 @@
       font-size: 13px;
       font-weight: 700;
       color: #276749;
-    }
-
-    .battery-voltage {
-      margin-top: 10px;
-      font-size: 13px;
-      color: #718096;
     }
 
     .device-info {
@@ -519,24 +486,35 @@
       </div>
     </div>
 
-    <!-- Battery -->
-    <div class="card battery-card">
-      <div class="card-header">Battery Status</div>
+    <!-- Weather -->
+    <div class="card weather-card">
+      <div class="card-header">Live Weather</div>
       <div class="card-body">
-        <div class="battery-label">Battery Level</div>
-        <div class="battery-visual">
-          <div class="battery-shell">
-            <div class="battery-fill" id="battery-visual-fill"></div>
-            <div class="battery-pct" id="battery-pct">—%</div>
+        <div class="weather-label">Current Conditions</div>
+        <div class="weather-main">
+          <div class="weather-icon" id="weather-icon">⛅</div>
+          <div>
+            <div class="weather-temp" id="weather-temp">—°C</div>
+            <div class="weather-desc" id="weather-desc">Loading...</div>
           </div>
         </div>
-        <div class="battery-bar-bg">
-          <div class="battery-bar-fill" id="battery-bar" style="width:0%"></div>
+        <div class="weather-stats">
+          <div class="weather-stat">
+            <span>🌧️ Rain (current)</span>
+            <span id="weather-rain">—</span>
+          </div>
+          <div class="weather-stat">
+            <span>💧 Humidity</span>
+            <span id="weather-humidity">—</span>
+          </div>
+          <div class="weather-stat">
+            <span>💨 Wind</span>
+            <span id="weather-wind">—</span>
+          </div>
         </div>
-        <div class="battery-health" id="battery-health">
-          ✅ Good — Battery performing optimally
+        <div class="rain-status" id="rain-status">
+          Checking rainfall...
         </div>
-        <div class="battery-voltage" id="battery-voltage">Voltage: —V</div>
 
         <div class="device-info">
           <div class="info-row">
@@ -609,10 +587,10 @@
 
   // ── Fake curb data (mirrors server) ──────────────────────────
   const FAKE_CURBS = {
-    "Curb #2": { location: "Chancellor Hall",    lat: 4.3853, lng: 100.9737, state: "PRE_CLOG", depth_cm: 2.5, battery_v: 3.7, timestamp: "2026-07-13 08:15:00", real: false },
-    "Curb #3": { location: "Block 11",           lat: 4.3840, lng: 100.9755, state: "CRITICAL", depth_cm: 4.5, battery_v: 3.6, timestamp: "2026-07-13 08:20:00", real: false },
-    "Curb #4": { location: "R&D Assembly Point", lat: 4.3870, lng: 100.9750, state: "NORMAL",   depth_cm: 0.1, battery_v: 4.0, timestamp: "2026-07-13 08:18:00", real: false },
-    "Curb #5": { location: "Masjid An-Nur",      lat: 4.3825, lng: 100.9730, state: "NORMAL",   depth_cm: 0.3, battery_v: 3.8, timestamp: "2026-07-13 08:10:00", real: false }
+    "Curb #2": { location: "Chancellor Hall",    lat: 4.3853, lng: 100.9737, state: "PRE_CLOG", depth_cm: 2.5, timestamp: "2026-07-13 08:15:00", real: false },
+    "Curb #3": { location: "Block 11",           lat: 4.3840, lng: 100.9755, state: "CRITICAL", depth_cm: 4.5, timestamp: "2026-07-13 08:20:00", real: false },
+    "Curb #4": { location: "R&D Assembly Point", lat: 4.3870, lng: 100.9750, state: "NORMAL",   depth_cm: 0.1, timestamp: "2026-07-13 08:18:00", real: false },
+    "Curb #5": { location: "Masjid An-Nur",      lat: 4.3825, lng: 100.9730, state: "NORMAL",   depth_cm: 0.3, timestamp: "2026-07-13 08:10:00", real: false }
   };
 
   // ── Clock ─────────────────────────────────────────────────────
@@ -626,29 +604,43 @@
   setInterval(updateClock, 1000);
   updateClock();
 
-  // ── Battery helpers ───────────────────────────────────────────
-  function voltageToPct(v) {
-    if (v >= 4.2) return 100;
-    if (v <= 3.0) return 0;
-    return Math.round(((v - 3.0) / 1.2) * 100);
-  }
+  // ── Weather (Open-Meteo, free, no API key) ────────────────────
+  async function loadWeather(lat, lng) {
+    try {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,precipitation,rain,weather_code,wind_speed_10m&timezone=auto`;
+      const res  = await fetch(url);
+      const data = await res.json();
+      const c    = data.current;
 
-  function batteryClass(pct) {
-    if (pct > 50) return '';
-    if (pct > 20) return 'medium';
-    return 'low';
-  }
+      const codes = {
+        0: ['☀️','Clear sky'], 1: ['🌤️','Mainly clear'], 2: ['⛅','Partly cloudy'], 3: ['☁️','Overcast'],
+        45: ['🌫️','Fog'], 48: ['🌫️','Fog'], 51: ['🌦️','Light drizzle'], 53: ['🌦️','Drizzle'], 55: ['🌧️','Heavy drizzle'],
+        61: ['🌧️','Light rain'], 63: ['🌧️','Rain'], 65: ['🌧️','Heavy rain'], 80: ['🌦️','Light showers'],
+        81: ['🌧️','Showers'], 82: ['⛈️','Heavy showers'], 95: ['⛈️','Thunderstorm'], 96: ['⛈️','Thunderstorm + hail'], 99: ['⛈️','Severe thunderstorm']
+      };
+      const [icon, desc] = codes[c.weather_code] || ['🌡️','Unknown'];
 
-  function batteryHealth(pct) {
-    if (pct > 50) return '✅ Good — Battery performing optimally';
-    if (pct > 20) return '⚠️ Medium — Consider recharging soon';
-    return '🔴 Low — Recharge immediately';
-  }
+      document.getElementById('weather-icon').textContent     = icon;
+      document.getElementById('weather-temp').textContent     = `${c.temperature_2m}°C`;
+      document.getElementById('weather-desc').textContent     = desc;
+      document.getElementById('weather-rain').textContent     = `${c.rain ?? 0} mm`;
+      document.getElementById('weather-humidity').textContent = `${c.relative_humidity_2m}%`;
+      document.getElementById('weather-wind').textContent     = `${c.wind_speed_10m} km/h`;
 
-  function batteryHealthColor(pct) {
-    if (pct > 50) return '#C6F6D5';
-    if (pct > 20) return '#FEFCBF';
-    return '#FED7D7';
+      const raining = (c.rain ?? 0) > 0 || (c.precipitation ?? 0) > 0;
+      const rs = document.getElementById('rain-status');
+      if (raining) {
+        rs.textContent = '🌧️ Rainfall detected — water levels expected to rise';
+        rs.style.backgroundColor = '#BEE3F8';
+        rs.style.color = '#2A4365';
+      } else {
+        rs.textContent = '☀️ No rainfall — high water indicates blockage';
+        rs.style.backgroundColor = '#C6F6D5';
+        rs.style.color = '#276749';
+      }
+    } catch (err) {
+      document.getElementById('weather-desc').textContent = 'Weather unavailable';
+    }
   }
 
   // ── Status highlight ──────────────────────────────────────────
@@ -715,8 +707,8 @@
         afterDraw(chart) {
           const { ctx, chartArea: { left, right }, scales: { y } } = chart;
 
-          // Pre-Clog line at 2.5cm
-          const y1 = y.getPixelForValue(2.5);
+          // Pre-Clog line at 1.5cm
+          const y1 = y.getPixelForValue(1.5);
           ctx.save();
           ctx.setLineDash([6, 4]);
           ctx.strokeStyle = '#D69E2E';
@@ -727,17 +719,17 @@
           ctx.stroke();
           ctx.fillStyle  = '#D69E2E';
           ctx.font       = 'bold 10px Segoe UI';
-          ctx.fillText('PRE-CLOG 2.5cm', right - 110, y1 - 5);
+          ctx.fillText('PRE-CLOG 1.5cm', right - 110, y1 - 5);
 
-          // Critical line at 4.5cm
-          const y2 = y.getPixelForValue(4.5);
+          // Critical line at 3.0cm
+          const y2 = y.getPixelForValue(3.0);
           ctx.strokeStyle = '#FC8181';
           ctx.beginPath();
           ctx.moveTo(left, y2);
           ctx.lineTo(right, y2);
           ctx.stroke();
           ctx.fillStyle  = '#FC8181';
-          ctx.fillText('CRITICAL 4.5cm', right - 110, y2 - 5);
+          ctx.fillText('CRITICAL 3.0cm', right - 110, y2 - 5);
           ctx.restore();
         }
       }]
@@ -790,8 +782,6 @@
 
   // ── Render curb data ──────────────────────────────────────────
   function renderCurb(data, isReal) {
-    const pct = voltageToPct(data.battery_v);
-
     document.getElementById('curb-title').textContent       = `${data.id} — ${data.location}`;
     document.getElementById('curb-location').textContent    = data.location;
     document.getElementById('device-id').textContent        = data.id;
@@ -799,23 +789,10 @@
     document.getElementById('last-updated').textContent     = data.timestamp;
     document.getElementById('data-type').textContent        = isReal ? '🟢 Live Arduino' : '🟡 Demo Data';
     document.getElementById('live-tag').textContent         = isReal ? 'Live' : 'Demo';
-    document.getElementById('battery-pct').textContent      = `${pct}%`;
-    document.getElementById('battery-voltage').textContent  = `Voltage: ${data.battery_v}V`;
-
-    const bar = document.getElementById('battery-bar');
-    bar.style.width    = `${pct}%`;
-    bar.className      = `battery-bar-fill ${batteryClass(pct)}`;
-
-    const visualFill = document.getElementById('battery-visual-fill');
-    visualFill.style.width = `${pct}%`;
-    visualFill.className = `battery-fill ${batteryClass(pct)}`;
-
-    const health = document.getElementById('battery-health');
-    health.textContent        = batteryHealth(pct);
-    health.style.backgroundColor = batteryHealthColor(pct);
 
     highlightStatus(data.state);
     setMap(data.lat, data.lng, data.id);
+    loadWeather(data.lat, data.lng);
   }
 
   // ── Main load ─────────────────────────────────────────────────
@@ -838,7 +815,7 @@
           renderCurb({
             id: 'Curb #1', location: 'Village 5G',
             lat: 4.3810, lng: 100.9720,
-            state: 'NORMAL', depth_cm: 0, battery_v: 0,
+            state: 'NORMAL', depth_cm: 0,
             timestamp: 'No data yet'
           }, true);
           buildFakeChart('NORMAL');
@@ -849,7 +826,6 @@
             lat: 4.3810, lng: 100.9720,
             state      : latest.state,
             depth_cm   : latest.depth,
-            battery_v  : latest.battery,
             timestamp  : latest.timestamp
           }, true);
 
