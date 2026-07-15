@@ -329,7 +329,11 @@
       border-radius: 2px;
     }
 
-    #depthChart { width: 100% !important; }
+    .chart-container {
+      position: relative;
+      height: 260px;
+      width: 100%;
+    }
 
     .log-card { grid-column: 3; grid-row: 2; }
 
@@ -408,6 +412,61 @@
       50%       { opacity: 0.3; }
     }
 
+    .maint-popup {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      max-width: 380px;
+      background: #FEFCBF;
+      color: #7B341E;
+      border-left: 6px solid #D69E2E;
+      border-radius: 10px;
+      padding: 16px 20px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+      z-index: 1000;
+      display: none;
+      animation: slideIn 0.4s ease;
+    }
+
+    .maint-popup.critical {
+      background: #FED7D7;
+      color: #9B2335;
+      border-left-color: #FC8181;
+    }
+
+    .maint-popup.show { display: block; }
+
+    .maint-popup-title {
+      font-weight: 800;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .maint-popup-close {
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-size: 16px;
+      color: inherit;
+      font-weight: 800;
+    }
+
+    .maint-popup-body {
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(120%); opacity: 0; }
+      to   { transform: translateX(0);    opacity: 1; }
+    }
+
     .footer {
       text-align: center;
       padding: 20px;
@@ -418,6 +477,15 @@
   </style>
 </head>
 <body>
+
+  <!-- Maintenance popup -->
+  <div class="maint-popup" id="maint-popup">
+    <div class="maint-popup-title">
+      <span id="maint-title">⚠️ Maintenance Required</span>
+      <button class="maint-popup-close" onclick="dismissPopup()">✕</button>
+    </div>
+    <div class="maint-popup-body" id="maint-body"></div>
+  </div>
 
   <!-- Header -->
   <div class="header">
@@ -557,7 +625,9 @@
         </div>
       </div>
       <div class="card-body">
-        <canvas id="depthChart" height="180"></canvas>
+        <div class="chart-container">
+          <canvas id="depthChart"></canvas>
+        </div>
       </div>
     </div>
 
@@ -604,6 +674,49 @@
   setInterval(updateClock, 1000);
   updateClock();
 
+  // ── Maintenance popup ─────────────────────────────────────────
+  let popupDismissed = false;
+  let currentRaining = null;
+
+  function dismissPopup() {
+    document.getElementById('maint-popup').classList.remove('show');
+    popupDismissed = true;
+  }
+
+  function checkMaintenance(state) {
+    if (popupDismissed) return;
+    const popup = document.getElementById('maint-popup');
+    const title = document.getElementById('maint-title');
+    const body  = document.getElementById('maint-body');
+
+    if (state === 'NORMAL' || currentRaining === null) {
+      popup.classList.remove('show');
+      return;
+    }
+
+    if (currentRaining === false) {
+      // High water + no rain = blockage
+      if (state === 'CRITICAL') {
+        popup.className = 'maint-popup critical show';
+        title.textContent = '🚨 Severe Blockage Detected';
+        body.textContent = 'Drain is FULL with no rainfall. This curb is blocked — dispatch cleaning crew immediately.';
+      } else {
+        popup.className = 'maint-popup show';
+        title.textContent = '⚠️ Maintenance Required';
+        body.textContent = 'Water accumulating with no rainfall detected. Likely debris blockage — schedule curb cleaning.';
+      }
+    } else {
+      // Raining — water rise expected, only alert on critical
+      if (state === 'CRITICAL') {
+        popup.className = 'maint-popup critical show';
+        title.textContent = '🚨 Flood Risk';
+        body.textContent = 'Drain full during rainfall. Monitor closely — flood risk at this location.';
+      } else {
+        popup.classList.remove('show');
+      }
+    }
+  }
+
   // ── Weather (Open-Meteo, free, no API key) ────────────────────
   async function loadWeather(lat, lng) {
     try {
@@ -628,6 +741,7 @@
       document.getElementById('weather-wind').textContent     = `${c.wind_speed_10m} km/h`;
 
       const raining = (c.rain ?? 0) > 0 || (c.precipitation ?? 0) > 0;
+      currentRaining = raining;
       const rs = document.getElementById('rain-status');
       if (raining) {
         rs.textContent = '🌧️ Rainfall detected — water levels expected to rise';
@@ -685,6 +799,8 @@
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
         plugins: {
           legend: { display: false },
           annotation: {}
@@ -792,7 +908,7 @@
 
     highlightStatus(data.state);
     setMap(data.lat, data.lng, data.id);
-    loadWeather(data.lat, data.lng);
+    loadWeather(data.lat, data.lng).then(() => checkMaintenance(data.state));
   }
 
   // ── Main load ─────────────────────────────────────────────────
