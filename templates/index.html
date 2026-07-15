@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Flash Stop Curb — Control Center</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background-color: #2D3748;
+      font-family: 'Segoe UI', sans-serif;
+      color: #F7FAFC;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' fill='none'/%3E%3Ccircle cx='3' cy='3' r='1' fill='rgba(247,250,252,0.04)'/%3E%3Ccircle cx='11' cy='11' r='1' fill='rgba(247,250,252,0.04)'/%3E%3Ccircle cx='19' cy='19' r='1' fill='rgba(247,250,252,0.04)'/%3E%3C/svg%3E");
+      opacity: 0.22;
+      pointer-events: none;
+    }
+
+    .header {
+      background-color: #1A202C;
+      padding: 24px 36px 20px;
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 0.8fr;
+      align-items: center;
+      gap: 20px;
+      border-bottom: 3px solid #D69E2E;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .header-logo {
+      font-size: 30px;
+      font-weight: 800;
+      color: #D69E2E;
+      letter-spacing: 2.6px;
+      text-transform: uppercase;
+      line-height: 1.05;
+    }
+
+    .header-subtitle {
+      font-size: 11px;
+      color: #4FD1C5;
+      letter-spacing: 2.2px;
+      text-transform: uppercase;
+      margin-top: 5px;
+      font-weight: 700;
+    }
+
+    .header-title {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 2.4px;
+      text-transform: uppercase;
+      color: #F7FAFC;
+      text-align: center;
+    }
+
+    .header-time {
+      font-size: 15px;
+      color: #D69E2E;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      text-align: right;
+    }
+
+    .main {
+      padding: 28px 36px 24px;
+    }
+
+    .section-title {
+      font-size: 12px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #D69E2E;
+      margin-bottom: 14px;
+      font-weight: 700;
+    }
+
+    .summary-bar {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(247, 250, 252, 0.14);
+    }
+
+    .summary-card {
+      position: relative;
+      background-color: #EDF2F7;
+      border-radius: 12px;
+      padding: 20px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-left: 4px solid #4FD1C5;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
+      overflow: hidden;
+      min-height: 116px;
+    }
+
+    .summary-card.total { border-left-color: #4FD1C5; }
+    .summary-card.normal { border-left-color: #48BB78; }
+    .summary-card.preclog { border-left-color: #D69E2E; }
+    .summary-card.critical { border-left-color: #FC8181; }
+
+    .summary-card .count {
+      font-size: 48px;
+      font-weight: 800;
+      color: #2D3748;
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+
+    .summary-card .label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #718096;
+      font-weight: 700;
+      margin-top: 6px;
+    }
+
+
+
+    .card-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+      background-color: rgba(45, 55, 72, 0.08);
+      color: #2D3748;
+      z-index: 1;
+      flex-shrink: 0;
+    }
+
+    .summary-card.normal .card-icon { background-color: #C6F6D5; color: #276749; }
+    .summary-card.preclog .card-icon { background-color: #FEFCBF; color: #7B341E; }
+    .summary-card.critical .card-icon { background-color: #FED7D7; color: #9B2335; }
+    .summary-card.total .card-icon { background-color: rgba(79, 209, 197, 0.2); color: #2D3748; }
+
+    .table-card {
+      background-color: #EDF2F7;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
+      border: 1px solid rgba(26, 32, 44, 0.08);
+    }
+
+    .table-header {
+      background-color: #1A202C;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid #D69E2E;
+    }
+
+    .table-header span {
+      font-size: 13px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #D69E2E;
+      font-weight: 700;
+    }
+
+    .live-dot {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #4FD1C5;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .live-dot::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #4FD1C5;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead th {
+      background-color: #1A202C;
+      color: #D69E2E;
+      font-size: 10px;
+      letter-spacing: 2.2px;
+      text-transform: uppercase;
+      padding: 14px 24px;
+      text-align: left;
+      font-weight: 700;
+      border-bottom: 1px solid rgba(214, 158, 46, 0.2);
+    }
+
+    tbody tr {
+      border-bottom: 1px solid rgba(45, 55, 72, 0.08);
+      cursor: pointer;
+      transition: background-color 0.2s ease, transform 0.2s ease;
+    }
+
+    tbody tr:nth-child(even) {
+      background-color: rgba(45, 55, 72, 0.04);
+    }
+
+    tbody tr:hover {
+      background-color: rgba(214, 158, 46, 0.14);
+      transform: translateY(-1px);
+    }
+
+    tbody td {
+      padding: 15px 24px;
+      font-size: 14px;
+     color: #2D3748 !important;
+    }
+
+    .curb-id {
+      font-weight: 700;
+      color: #2D3748;
+    }
+
+    .real-badge {
+      background-color: #D69E2E;
+      color: #1A202C;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+      margin-left: 8px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      box-shadow: inset 0 0 0 1px rgba(26, 32, 44, 0.05);
+    }
+
+    .status-NORMAL   { background-color: #C6F6D5; color: #276749; }
+    .status-PRE_CLOG { background-color: #FEFCBF; color: #7B341E; }
+    .status-CRITICAL { background-color: #FED7D7; color: #9B2335; }
+
+    .depth-bar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .depth-bar-bg {
+      width: 96px;
+      height: 8px;
+      background-color: rgba(45, 55, 72, 0.14);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .depth-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background-color: #48BB78;
+      transition: width 0.3s ease;
+    }
+
+    .depth-bar-fill.CRITICAL { background-color: #FC8181; }
+    .depth-bar-fill.PRE_CLOG { background-color: #D69E2E; }
+
+    .battery-text { color: #2D3748; font-weight: 700; }
+    .timestamp    { color: #718096; font-size: 12px; }
+
+    .footer {
+      text-align: center;
+      padding: 24px;
+      font-size: 12px;
+      color: #718096;
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div>
+        <div class="header-logo">FLASH STOP CURB</div>
+        <div class="header-subtitle">Smart Drainage Infrastructure</div>
+      </div>
+    </div>
+    <div class="header-title">Flood Monitor Control Center</div>
+    <div class="header-time" id="clock">--:-- --</div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- Summary bar -->
+    <div class="section-title">System Overview</div>
+    <div class="summary-bar">
+      <div class="summary-card total">
+        <div>
+          <div class="count" id="count-total">—</div>
+          <div class="label">Total Curbs</div>
+        </div>
+        
+      
+      </div>
+      <div class="summary-card normal">
+        <div>
+          <div class="count" id="count-normal">—</div>
+          <div class="label">Normal</div>
+        </div>
+        <div class="card-icon">✓</div>
+        
+      </div>
+      <div class="summary-card preclog">
+        <div>
+          <div class="count" id="count-preclog">—</div>
+          <div class="label">Pre-Clog</div>
+        </div>
+        <div class="card-icon">!</div>
+        
+      </div>
+      <div class="summary-card critical">
+        <div>
+          <div class="count" id="count-critical">—</div>
+          <div class="label">Critical</div>
+        </div>
+        <div class="card-icon">⚠</div>
+    
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="section-title">Live Monitoring Grid</div>
+    <div class="table-card">
+      <div class="table-header">
+        <span>All Monitored Curbs</span>
+        <div class="live-dot">Live Data</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Curb ID</th>
+            <th>Location</th>
+            <th>Status</th>
+            <th>Water Depth</th>
+            <th>Battery</th>
+            <th>Last Updated</th>
+          </tr>
+        </thead>
+        <tbody id="curb-table-body">
+          <tr><td colspan="6" style="text-align:center;color:#718096;padding:32px;">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    Flash Stop Curb Diagnostic System — ETP G76
+  </div>
+
+  <script>
+    // ── Clock ──────────────────────────────────────────────────
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('clock').textContent =
+        now.toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // ── Status badge ───────────────────────────────────────────
+    function statusBadge(state) {
+      const labels = {
+        NORMAL   : 'Normal',
+        PRE_CLOG : 'Pre-Clog',
+        CRITICAL : 'Critical'
+      };
+      return `<span class="status-badge status-${state}">${labels[state] || state}</span>`;
+    }
+
+    // ── Depth bar ──────────────────────────────────────────────
+    function depthBar(depth, state) {
+      const pct = Math.min((depth / 5.0) * 100, 100).toFixed(0);
+      return `
+        <div class="depth-bar-wrap">
+          <div class="depth-bar-bg">
+            <div class="depth-bar-fill ${state}" style="width:${pct}%"></div>
+          </div>
+          <span>${depth} cm</span>
+        </div>`;
+    }
+
+    // ── Fetch and render ───────────────────────────────────────
+    async function loadCurbs() {
+      try {
+        const res  = await fetch('/api/curbs');
+        const data = await res.json();
+
+        // Summary counts
+        document.getElementById('count-total').textContent   = data.length;
+        document.getElementById('count-normal').textContent  = data.filter(c => c.state === 'NORMAL').length;
+        document.getElementById('count-preclog').textContent = data.filter(c => c.state === 'PRE_CLOG').length;
+        document.getElementById('count-critical').textContent= data.filter(c => c.state === 'CRITICAL').length;
+
+        // Table rows
+        const tbody = document.getElementById('curb-table-body');
+        tbody.innerHTML = '';
+        data.forEach(curb => {
+          const row = document.createElement('tr');
+          row.onclick = () => window.location.href = `/curb/${encodeURIComponent(curb.id)}`;
+          row.innerHTML = `
+            <td>
+              <span class="curb-id">${curb.id}</span>
+              ${curb.real ? '<span class="real-badge">LIVE</span>' : ''}
+            </td>
+            <td>${curb.location}</td>
+            <td>${statusBadge(curb.state)}</td>
+            <td>${depthBar(curb.depth_cm, curb.state)}</td>
+            <td class="battery-text">${curb.battery_v}V</td>
+            <td class="timestamp">${curb.timestamp}</td>
+          `;
+          tbody.appendChild(row);
+        });
+      } catch (err) {
+        document.getElementById('curb-table-body').innerHTML =
+          '<tr><td colspan="6" style="text-align:center;color:#FC8181;padding:32px;">Failed to load data — check server</td></tr>';
+      }
+    }
+
+    // Refresh every 30 seconds
+    loadCurbs();
+    setInterval(loadCurbs, 30000);
+  </script>
+
+</body>
+</html>
